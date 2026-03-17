@@ -124,13 +124,13 @@ async function run() {
 
   allSections.push(
     await runSection(
-      'COMPILATION (Handlebars.precompile)',
+      'COMPILATION (Handlebars.compile + first render)',
       COMPILE_BENCH_CONFIG,
       (bench) => {
         for (const [name, def] of Object.entries(templates)) {
           const hb = createEnv(def);
           bench.add(`compile: ${name}`, () => {
-            hb.precompile(def.template);
+            hb.compile(def.template)({});
           });
         }
       }
