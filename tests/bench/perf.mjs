@@ -129,6 +129,8 @@ async function run() {
       (bench) => {
         for (const [name, def] of Object.entries(templates)) {
           const hb = createEnv(def);
+          // Handlebars.compile() uses lazy evaluation — actual compilation
+          // (parsing, codegen, new Function()) only happens on first invocation.
           bench.add(`compile: ${name}`, () => {
             hb.compile(def.template)({});
           });
