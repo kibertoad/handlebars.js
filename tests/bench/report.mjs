@@ -78,7 +78,10 @@ export function printSectionHeader(title) {
 
 // ─── Markdown report ─────────────────────────────────────────────────────────
 
-export function saveMarkdownReport(sections, { label, config, date }) {
+export function saveMarkdownReport(
+  sections,
+  { label, compileConfig, execConfig, date }
+) {
   const resultsDir = join(__dirname, 'results');
   mkdirSync(resultsDir, { recursive: true });
 
@@ -96,7 +99,10 @@ export function saveMarkdownReport(sections, { label, config, date }) {
   lines.push(`- **Node:** ${process.version}`);
   lines.push(`- **Platform:** ${process.platform} ${process.arch}`);
   lines.push(
-    `- **Config:** warmup=${config.warmupIterations}, minIterations=${config.iterations}, time=${config.time}ms`
+    `- **Compile config:** warmup=${compileConfig.warmupIterations}, minIterations=${compileConfig.iterations}, time=${compileConfig.time}ms`
+  );
+  lines.push(
+    `- **Exec config:** warmup=${execConfig.warmupIterations}, minIterations=${execConfig.iterations}, time=${execConfig.time}ms`
   );
   lines.push('');
 

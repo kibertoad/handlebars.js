@@ -51,9 +51,9 @@
     "test:browser-smoke": "playwright test --config tests/browser/playwright.config.js",
     "test:serve": "npx serve -l 9999 .",
     "test:integration": "npm run build && ./tests/integration/run-integration-tests.sh",
-    "bench": "node bench/perf.mjs",
-    "bench:compare": "node bench/compare.mjs",
-    "bench:size": "node bench/size.mjs",
+    "bench": "node tests/bench/perf.mjs",
+    "bench:compare": "node tests/bench/compare.mjs",
+    "bench:size": "node tests/bench/size.mjs",
     "--- combined tasks ---": "",
     "check-before-pull-request": "concurrently --kill-others-on-fail npm:lint npm:test"
   },

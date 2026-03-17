@@ -1,6 +1,6 @@
 import { execSync } from 'node:child_process';
 import { Bench } from 'tinybench';
-import Handlebars from '../lib/index.js';
+import Handlebars from '../../lib/index.js';
 import { templates as allTemplates } from './templates.mjs';
 import {
   printResults,
@@ -9,8 +9,16 @@ import {
 } from './report.mjs';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
+// Compilation happens once at app startup — low warmup reflects real-world conditions.
+// Execution happens thousands of times — higher warmup lets V8 optimize hot paths.
 
-const BENCH_CONFIG = {
+const COMPILE_BENCH_CONFIG = {
+  warmupIterations: 10,
+  iterations: 1000,
+  time: 3000,
+};
+
+const EXEC_BENCH_CONFIG = {
   warmupIterations: 500,
   iterations: 5000,
   time: 3000,
@@ -67,8 +75,8 @@ if (grepPattern) {
 
 // ─── Bench helpers ───────────────────────────────────────────────────────────
 
-function newBench() {
-  return new Bench(BENCH_CONFIG);
+function newBench(config) {
+  return new Bench(config);
 }
 
 function createEnv(def) {
@@ -84,10 +92,10 @@ function createEnv(def) {
   return hb;
 }
 
-async function runSection(title, setup) {
+async function runSection(title, config, setup) {
   printSectionHeader(title);
 
-  const bench = newBench();
+  const bench = newBench(config);
   setup(bench);
   await bench.run();
   printResults(bench);
@@ -105,7 +113,7 @@ async function run() {
   console.log(`Handlebars Performance Benchmark${headerLabel}`);
   console.log('================================');
   console.log(
-    `tinybench | warmup: ${BENCH_CONFIG.warmupIterations} | minIterations: ${BENCH_CONFIG.iterations} | time: ${BENCH_CONFIG.time}ms per bench`
+    `tinybench | compile: warmup ${COMPILE_BENCH_CONFIG.warmupIterations}, min ${COMPILE_BENCH_CONFIG.iterations} | exec: warmup ${EXEC_BENCH_CONFIG.warmupIterations}, min ${EXEC_BENCH_CONFIG.iterations} | time: ${EXEC_BENCH_CONFIG.time}ms per bench`
   );
   console.log(`Node ${process.version} | ${process.platform} ${process.arch}`);
   console.log();
@@ -115,14 +123,18 @@ async function run() {
   // ─── COMPILATION ────────────────────────────────────────────────────────────
 
   allSections.push(
-    await runSection('COMPILATION (Handlebars.compile)', (bench) => {
-      for (const [name, def] of Object.entries(templates)) {
-        const hb = createEnv(def);
-        bench.add(`compile: ${name}`, () => {
-          hb.compile(def.template);
-        });
+    await runSection(
+      'COMPILATION (Handlebars.precompile)',
+      COMPILE_BENCH_CONFIG,
+      (bench) => {
+        for (const [name, def] of Object.entries(templates)) {
+          const hb = createEnv(def);
+          bench.add(`compile: ${name}`, () => {
+            hb.precompile(def.template);
+          });
+        }
       }
-    })
+    )
   );
 
   // ─── EXECUTION + output verification ────────────────────────────────────────
@@ -130,15 +142,19 @@ async function run() {
   const expectedOutputs = {};
 
   allSections.push(
-    await runSection('EXECUTION (template rendering)', (bench) => {
-      for (const [name, def] of Object.entries(templates)) {
-        const compiled = createEnv(def).compile(def.template);
-        expectedOutputs[name] = compiled(def.context);
-        bench.add(`exec: ${name}`, () => {
-          compiled(def.context);
-        });
+    await runSection(
+      'EXECUTION (template rendering)',
+      EXEC_BENCH_CONFIG,
+      (bench) => {
+        for (const [name, def] of Object.entries(templates)) {
+          const compiled = createEnv(def).compile(def.template);
+          expectedOutputs[name] = compiled(def.context);
+          bench.add(`exec: ${name}`, () => {
+            compiled(def.context);
+          });
+        }
       }
-    })
+    )
   );
 
   // Verify outputs haven't changed during benchmarking
@@ -163,65 +179,78 @@ async function run() {
   // ─── PRECOMPILATION ─────────────────────────────────────────────────────────
 
   allSections.push(
-    await runSection('PRECOMPILATION (Handlebars.precompile)', (bench) => {
-      for (const [name, def] of Object.entries(templates)) {
-        bench.add(`precompile: ${name}`, () => {
-          Handlebars.precompile(def.template);
-        });
+    await runSection(
+      'PRECOMPILATION (Handlebars.precompile)',
+      COMPILE_BENCH_CONFIG,
+      (bench) => {
+        for (const [name, def] of Object.entries(templates)) {
+          bench.add(`precompile: ${name}`, () => {
+            Handlebars.precompile(def.template);
+          });
+        }
       }
-    })
+    )
   );
 
   // ─── END-TO-END ─────────────────────────────────────────────────────────────
 
   allSections.push(
-    await runSection('END-TO-END (compile + render)', (bench) => {
-      for (const [name, def] of Object.entries(templates)) {
-        const hb = createEnv(def);
-        bench.add(`e2e: ${name}`, () => {
-          const fn = hb.compile(def.template);
-          fn(def.context);
-        });
+    await runSection(
+      'END-TO-END (compile + render)',
+      COMPILE_BENCH_CONFIG,
+      (bench) => {
+        for (const [name, def] of Object.entries(templates)) {
+          const hb = createEnv(def);
+          bench.add(`e2e: ${name}`, () => {
+            const fn = hb.compile(def.template);
+            fn(def.context);
+          });
+        }
       }
-    })
+    )
   );
 
   // ─── COMPILE OPTIONS ───────────────────────────────────────────────────────
 
   allSections.push(
-    await runSection('COMPILE OPTIONS COMPARISON', (bench) => {
-      const src = allTemplates['complex (if/each/helpers)'].template;
-      const ctx = allTemplates['complex (if/each/helpers)'].context;
+    await runSection(
+      'COMPILE OPTIONS COMPARISON',
+      EXEC_BENCH_CONFIG,
+      (bench) => {
+        const src = allTemplates['complex (if/each/helpers)'].template;
+        const ctx = allTemplates['complex (if/each/helpers)'].context;
 
-      const defaultFn = Handlebars.compile(src);
-      bench.add('exec: default options', () => defaultFn(ctx));
+        const defaultFn = Handlebars.compile(src);
+        bench.add('exec: default options', () => defaultFn(ctx));
 
-      const noEscapeFn = Handlebars.compile(src, { noEscape: true });
-      bench.add('exec: noEscape=true', () => noEscapeFn(ctx));
+        const noEscapeFn = Handlebars.compile(src, { noEscape: true });
+        bench.add('exec: noEscape=true', () => noEscapeFn(ctx));
 
-      const strictFn = Handlebars.compile(src, {
-        strict: true,
-        assumeObjects: true,
-      });
-      bench.add('exec: strict + assumeObjects', () => strictFn(ctx));
+        const strictFn = Handlebars.compile(src, {
+          strict: true,
+          assumeObjects: true,
+        });
+        bench.add('exec: strict + assumeObjects', () => strictFn(ctx));
 
-      const knownFn = Handlebars.compile(src, {
-        knownHelpers: { if: true, each: true },
-        knownHelpersOnly: false,
-      });
-      bench.add('exec: knownHelpers', () => knownFn(ctx));
+        const knownFn = Handlebars.compile(src, {
+          knownHelpers: { if: true, each: true },
+          knownHelpersOnly: false,
+        });
+        bench.add('exec: knownHelpers', () => knownFn(ctx));
 
-      const compatFn = Handlebars.compile(src, { compat: true });
-      bench.add('exec: compat=true', () => compatFn(ctx));
+        const compatFn = Handlebars.compile(src, { compat: true });
+        bench.add('exec: compat=true', () => compatFn(ctx));
 
-      const noDataFn = Handlebars.compile(src, { data: false });
-      bench.add('exec: data=false', () => noDataFn(ctx));
-    })
+        const noDataFn = Handlebars.compile(src, { data: false });
+        bench.add('exec: data=false', () => noDataFn(ctx));
+      }
+    )
   );
 
   const filepath = saveMarkdownReport(allSections, {
     label,
-    config: BENCH_CONFIG,
+    compileConfig: COMPILE_BENCH_CONFIG,
+    execConfig: EXEC_BENCH_CONFIG,
     date: now,
   });
   console.log(`Results saved to: ${filepath}`);
