@@ -1,12 +1,12 @@
 import { execSync } from 'node:child_process';
 import { Bench } from 'tinybench';
 import Handlebars from '../../lib/index.js';
-import { templates as allTemplates } from './templates.mjs';
+import { templates as allTemplates } from './templates.js';
 import {
   printResults,
   printSectionHeader,
   saveMarkdownReport,
-} from './report.mjs';
+} from './report.js';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
 // Compilation happens once at app startup — low warmup reflects real-world conditions.

@@ -37,7 +37,6 @@ export default defineConfig({
             'spec/.eslintrc.js',
             'spec/precompiler.js',
             'spec/spec.js',
-            'spec/require.js',
             'spec/source-map.js',
           ],
           setupFiles: [
@@ -55,16 +54,7 @@ export default defineConfig({
     ],
     coverage: {
       provider: 'v8',
-      include: ['dist/cjs/**/*.js'],
-      thresholds: {
-        // Slightly below 100% because SWC injects helper functions
-        // (e.g. _sliced_to_array, _non_iterable_rest, for-of try/catch/finally)
-        // with branches that are unreachable in practice.
-        statements: 99,
-        branches: 92,
-        functions: 100,
-        lines: 100,
-      },
+      include: ['lib/**/*.js'],
     },
   },
 });

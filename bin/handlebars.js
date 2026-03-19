@@ -1,10 +1,7 @@
 #!/usr/bin/env node
 
-import { createRequire } from 'node:module';
+import { loadTemplates, cli } from '../lib/precompiler.js';
 import yargs from 'yargs';
-
-const require = createRequire(import.meta.url);
-const Precompiler = require('../dist/cjs/precompiler');
 
 const parser = yargs(process.argv.slice(2))
   .usage('Precompile handlebar templates.\nUsage: $0 [template|directory]...')
@@ -18,23 +15,6 @@ const parser = yargs(process.argv.slice(2))
   .option('map', {
     type: 'string',
     description: 'Source Map File',
-  })
-  .option('a', {
-    type: 'boolean',
-    description: 'Exports amd style (require.js)',
-    alias: 'amd',
-  })
-  .option('c', {
-    type: 'string',
-    description: 'Exports CommonJS style, path to Handlebars module',
-    alias: 'commonjs',
-    default: null,
-  })
-  .option('h', {
-    type: 'string',
-    description: 'Path to handlebar.js (only valid for amd-style)',
-    alias: 'handlebarPath',
-    default: '',
   })
   .option('k', {
     type: 'string',
@@ -117,7 +97,7 @@ const argv = parser.parseSync();
 argv.files = argv._;
 delete argv._;
 
-Precompiler.loadTemplates(argv, function (err, opts) {
+loadTemplates(argv, function (err, opts) {
   if (err) {
     throw err;
   }
@@ -127,7 +107,7 @@ Precompiler.loadTemplates(argv, function (err, opts) {
   } else {
     // cli() is async (returns a Promise), so errors would become unhandled
     // rejections. Re-throw via nextTick to surface them as uncaught exceptions.
-    Promise.resolve(Precompiler.cli(opts)).catch((error) => {
+    Promise.resolve(cli(opts)).catch((error) => {
       process.nextTick(() => {
         throw error;
       });

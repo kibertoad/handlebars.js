@@ -1,7 +1,7 @@
 const { execSync } = require('child_process');
-const git = require('./util/git');
+const git = require('./util/grunt-git.cjs');
 const semver = require('semver');
-const { createRegisterAsyncTaskFn } = require('./util/async-grunt-task');
+const { createRegisterAsyncTaskFn } = require('./util/grunt-async-task.cjs');
 
 module.exports = function (grunt) {
   const registerAsyncTask = createRegisterAsyncTaskFn(grunt);

@@ -16,26 +16,34 @@
     "url": "https://github.com/handlebars-lang/handlebars.js.git"
   },
   "bin": {
-    "handlebars": "bin/handlebars.mjs"
+    "handlebars": "bin/handlebars.js"
   },
   "files": [
     "bin",
     "dist/*.js",
-    "dist/cjs/**/*.js",
     "lib",
     "release-notes.md",
     "runtime.js",
     "types/*.d.ts",
     "runtime.d.ts"
   ],
+  "type": "module",
   "main": "lib/index.js",
-  "browser": "./dist/cjs/handlebars.js",
   "types": "types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./runtime": {
+      "types": "./runtime.d.ts",
+      "default": "./lib/handlebars.runtime.js"
+    },
+    "./package.json": "./package.json"
+  },
   "scripts": {
-    "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true});require('fs').rmSync('tmp',{recursive:true,force:true})\"",
-    "build:cjs": "swc lib --out-dir dist/cjs --strip-leading-paths --ignore \"**/index.js\"",
-    "build:bundles": "rspack build",
-    "build": "npm run clean && npm run build:cjs && npm run build:bundles",
+    "clean": "node --input-type=module -e \"import fs from 'fs';fs.rmSync('dist',{recursive:true,force:true});fs.rmSync('tmp',{recursive:true,force:true})\"",
+    "build": "npm run clean && rspack build",
     "release": "npm run build",
     "publish:aws": "npm run build && npm run test:tasks && node tasks/publish-to-aws.js",
     "format": "oxfmt --write . && oxlint --fix .",
@@ -51,9 +59,9 @@
     "test:browser-smoke": "playwright test --config tests/browser/playwright.config.js",
     "test:serve": "npx serve -l 9999 .",
     "test:integration": "npm run build && ./tests/integration/run-integration-tests.sh",
-    "bench": "node tests/bench/perf.mjs",
-    "bench:compare": "node tests/bench/compare.mjs",
-    "bench:size": "node tests/bench/size.mjs",
+    "bench": "node tests/bench/perf.js",
+    "bench:compare": "node tests/bench/compare.js",
+    "bench:size": "node tests/bench/size.js",
     "--- combined tasks ---": "",
     "check-before-pull-request": "concurrently --kill-others-on-fail npm:lint npm:test"
   },
@@ -68,8 +76,6 @@
     "@playwright/test": "^1.58.2",
     "@rspack/cli": "^1.7.8",
     "@rspack/core": "^1.7.8",
-    "@swc/cli": "^0.8.0",
-    "@swc/core": "^1.15.18",
     "@vitest/browser": "^4.0.18",
     "@vitest/browser-playwright": "^4.0.18",
     "@vitest/coverage-v8": "^4.0.18",
@@ -115,14 +121,5 @@
   ],
   "engines": {
     "node": ">=20"
-  },
-  "jspm": {
-    "main": "handlebars",
-    "directories": {
-      "lib": "dist/cjs"
-    },
-    "buildConfig": {
-      "minify": true
-    }
   }
 }

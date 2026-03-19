@@ -1,3 +1,4 @@
-import Handlebars = require('handlebars');
+import Handlebars from 'handlebars';
 
-declare module 'handlebars/runtime' {}
+declare const runtime: typeof Handlebars;
+export default runtime;

@@ -1,8 +1,14 @@
-const { rspack } = require('@rspack/core');
-const path = require('path');
-const fs = require('fs');
+import { rspack } from '@rspack/core';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 
-const pkg = require('./package.json');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const pkg = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, 'package.json'), 'utf8')
+);
 const license = fs.readFileSync(path.resolve(__dirname, 'LICENSE'), 'utf8');
 const banner = `/*!
 
@@ -29,27 +35,10 @@ function createConfig(entry, filename, minimize) {
       filename,
       library: {
         name: 'Handlebars',
-        type: 'umd',
+        type: 'self',
         export: 'default',
       },
-      globalObject: 'this',
       clean: false,
-    },
-    module: {
-      rules: [
-        {
-          test: /\.js$/,
-          exclude: /node_modules/,
-          use: {
-            loader: 'builtin:swc-loader',
-            options: {
-              jsc: {
-                parser: { syntax: 'ecmascript' },
-              },
-            },
-          },
-        },
-      ],
     },
     optimization: {
       minimize,
@@ -71,12 +60,38 @@ function createConfig(entry, filename, minimize) {
         : [],
     },
     plugins,
+    resolve: {
+      extensions: ['.js', '.json'],
+      mainFields: ['main'],
+    },
+    module: {
+      rules: [
+        {
+          test: /\.js$/,
+          resolve: {
+            fullySpecified: false,
+          },
+        },
+        {
+          test: /\.js$/,
+          exclude: /node_modules/,
+          use: {
+            loader: 'builtin:swc-loader',
+            options: {
+              jsc: {
+                parser: { syntax: 'ecmascript' },
+              },
+            },
+          },
+        },
+      ],
+    },
     target: ['web', 'browserslist'],
     devtool: false,
   };
 }
 
-module.exports = [
+export default [
   createConfig('./lib/handlebars.js', 'handlebars.js', false),
   createConfig('./lib/handlebars.runtime.js', 'handlebars.runtime.js', false),
   createConfig('./lib/handlebars.js', 'handlebars.min.js', true),

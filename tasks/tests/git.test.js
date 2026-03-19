@@ -1,9 +1,8 @@
-const os = require('os');
-const path = require('path');
-const fs = require('fs-extra');
-const { spawnSync } = require('child_process');
-
-const git = require('../util/git');
+import os from 'os';
+import path from 'path';
+import fs from 'fs-extra';
+import { spawnSync } from 'child_process';
+import * as git from '../util/git.js';
 
 const tmpBaseDir = path.join(os.tmpdir(), 'handlebars-task-tests');
 const tmpDir = path.join(tmpBaseDir, Date.now().toString(36));

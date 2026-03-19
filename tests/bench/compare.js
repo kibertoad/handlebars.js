@@ -9,7 +9,7 @@ import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-import { formatOps } from './report.mjs';
+import { formatOps } from './report.js';
 
 // ─── Resolve files ───────────────────────────────────────────────────────────
 
@@ -36,7 +36,7 @@ if (args.length >= 2) {
         : 'Only one benchmark result found. Run benchmarks on another branch first.'
     );
     console.error('');
-    console.error('Usage: node bench/compare.mjs [<baseline.md> <current.md>]');
+    console.error('Usage: node bench/compare.js [<baseline.md> <current.md>]');
     console.error('');
     console.error(
       'With no arguments, auto-selects the two most recent results.'

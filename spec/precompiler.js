@@ -1,14 +1,14 @@
 /* eslint-disable no-console */
+import Handlebars from '../lib/index.js';
+import * as Precompiler from '../lib/precompiler.js';
+import fs from 'fs';
+import uglify from 'uglify-js';
+
 describe('precompiler', function () {
   // NOP Under non-node environments
   if (typeof process === 'undefined') {
     return;
   }
-
-  var Handlebars = require('../lib'),
-    Precompiler = require('../dist/cjs/precompiler'),
-    fs = require('fs'),
-    uglify = require('uglify-js');
 
   var log,
     logFunction,
@@ -24,34 +24,6 @@ describe('precompiler', function () {
     file,
     content,
     writeFileSync;
-
-  /**
-   * Mock the Module.prototype.require-function such that an error is thrown, when "uglify-js" is loaded.
-   *
-   * The function cleans up its mess when "callback" is finished
-   *
-   * @param {Error} loadError the error that should be thrown if uglify is loaded
-   * @param {function} callback a callback-function to run when the mock is active.
-   */
-  async function mockRequireUglify(loadError, callback) {
-    var Module = require('module');
-    var _resolveFilename = Module._resolveFilename;
-    delete require.cache[require.resolve('uglify-js')];
-    delete require.cache[require.resolve('../dist/cjs/precompiler')];
-    Module._resolveFilename = function (request, mod) {
-      if (request === 'uglify-js') {
-        throw loadError;
-      }
-      return _resolveFilename.call(this, request, mod);
-    };
-    try {
-      await callback();
-    } finally {
-      Module._resolveFilename = _resolveFilename;
-      delete require.cache[require.resolve('uglify-js')];
-      delete require.cache[require.resolve('../dist/cjs/precompiler')];
-    }
-  }
 
   beforeEach(function () {
     precompile = Handlebars.precompile;
@@ -117,7 +89,10 @@ describe('precompiler', function () {
   });
   it('should throw when missing name', async function () {
     await expect(
-      Precompiler.cli({ templates: [{ source: '' }], amd: true })
+      Precompiler.cli({
+        templates: [{ source: '' }, { source: '' }],
+        hasDirectory: true,
+      })
     ).rejects.toThrow('Name missing for template');
   });
   it('should throw when combining simple and directories', async function () {
@@ -140,56 +115,14 @@ describe('precompiler', function () {
     await Precompiler.cli({ templates: [{ source: '' }] });
     expect(log).toBe('simple\n');
   });
-  it('should output amd templates', async function () {
+
+  it('should output wrapped templates', async function () {
     Handlebars.precompile = function () {
-      return 'amd';
+      return 'wrapped';
     };
-    await Precompiler.cli({ templates: [emptyTemplate], amd: true });
-    expect(log).toMatch(/template\(amd\)/);
-  });
-  it('should output multiple amd', async function () {
-    Handlebars.precompile = function () {
-      return 'amd';
-    };
-    await Precompiler.cli({
-      templates: [emptyTemplate, emptyTemplate],
-      amd: true,
-      namespace: 'foo',
-    });
-    expect(log).toMatch(/templates = foo = foo \|\|/);
-    expect(log).toMatch(/return templates/);
-    expect(log).toMatch(/template\(amd\)/);
-  });
-  it('should output amd partials', async function () {
-    Handlebars.precompile = function () {
-      return 'amd';
-    };
-    await Precompiler.cli({
-      templates: [emptyTemplate],
-      amd: true,
-      partial: true,
-    });
-    expect(log).toMatch(/return Handlebars\.partials\['empty'\]/);
-    expect(log).toMatch(/template\(amd\)/);
-  });
-  it('should output multiple amd partials', async function () {
-    Handlebars.precompile = function () {
-      return 'amd';
-    };
-    await Precompiler.cli({
-      templates: [emptyTemplate, emptyTemplate],
-      amd: true,
-      partial: true,
-    });
-    expect(log).not.toMatch(/return Handlebars\.partials\[/);
-    expect(log).toMatch(/template\(amd\)/);
-  });
-  it('should output commonjs templates', async function () {
-    Handlebars.precompile = function () {
-      return 'commonjs';
-    };
-    await Precompiler.cli({ templates: [emptyTemplate], commonjs: true });
-    expect(log).toMatch(/template\(commonjs\)/);
+    await Precompiler.cli({ templates: [emptyTemplate] });
+    expect(log).toMatch(/template\(wrapped\)/);
+    expect(log).toMatch(/\(function\(\)/);
   });
 
   it('should set data flag', async function () {
@@ -233,40 +166,13 @@ describe('precompiler', function () {
 
   it('should output minimized templates', async function () {
     Handlebars.precompile = function () {
-      return 'amd';
+      return 'iife';
     };
     uglify.minify = function () {
       return { code: 'min' };
     };
     await Precompiler.cli({ templates: [emptyTemplate], min: true });
     expect(log).toBe('min');
-  });
-
-  it('should omit minimization gracefully, if uglify-js is missing', async function () {
-    var error = new Error("Cannot find module 'uglify-js'");
-    error.code = 'MODULE_NOT_FOUND';
-    await mockRequireUglify(error, async function () {
-      var Precompiler = require('../dist/cjs/precompiler');
-      Handlebars.precompile = function () {
-        return 'amd';
-      };
-      await Precompiler.cli({ templates: [emptyTemplate], min: true });
-      expect(log).toMatch(/template\(amd\)/);
-      expect(log).toMatch(/\n/);
-      expect(errorLog).toMatch(/Code minimization is disabled/);
-    });
-  });
-
-  it('should fail on errors (other than missing module) while loading uglify-js', async function () {
-    await mockRequireUglify(new Error('Mock Error'), async function () {
-      var Precompiler = require('../dist/cjs/precompiler');
-      Handlebars.precompile = function () {
-        return 'amd';
-      };
-      await expect(
-        Precompiler.cli({ templates: [emptyTemplate], min: true })
-      ).rejects.toThrow('Mock Error');
-    });
   });
 
   it('should output map', async function () {
@@ -367,11 +273,12 @@ describe('precompiler', function () {
       expect(opts.templates[1].source).toBe('bar');
     });
     it('should accept stdin input', async function () {
-      var stdin = require('mock-stdin').stdin();
+      var { stdin } = await import('mock-stdin');
+      var stdinMock = stdin();
       var promise = loadTemplatesAsync({ string: '-' });
-      stdin.send('fo');
-      stdin.send('o');
-      stdin.end();
+      stdinMock.send('fo');
+      stdinMock.send('o');
+      stdinMock.end();
       var opts = await promise;
       expect(opts.templates[0].source).toBe('foo');
     });

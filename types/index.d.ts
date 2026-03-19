@@ -289,7 +289,8 @@ export interface Logger {
 export type CompilerInfo = [number /* revision */, string /* versions */];
 
 declare module 'handlebars/runtime' {
-  export = Handlebars;
+  const runtime: typeof Handlebars;
+  export default runtime;
 }
 
 export default Handlebars;

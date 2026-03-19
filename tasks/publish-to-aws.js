@@ -1,8 +1,8 @@
 /* eslint-disable no-console */
-const fs = require('fs');
-const { S3, PutObjectCommand } = require('@aws-sdk/client-s3');
-const git = require('./util/git');
-const semver = require('semver');
+import fs from 'fs';
+import { S3, PutObjectCommand } from '@aws-sdk/client-s3';
+import * as git from './util/git.js';
+import semver from 'semver';
 
 let s3Client;
 
@@ -98,9 +98,7 @@ function getLocalFile(filename) {
   return 'dist/' + filename;
 }
 
-if (require.main === module) {
-  main().catch((err) => {
-    console.error(err);
-    process.exit(1);
-  });
-}
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

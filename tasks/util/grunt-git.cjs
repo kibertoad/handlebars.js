@@ -1,33 +1,30 @@
-import childProcess from 'child_process';
+const childProcess = require('child_process');
 
-export async function remotes() {
-  return git('remote', '-v');
-}
-
-export async function branches() {
-  return git('branch', '-a');
-}
-
-export async function commitInfo() {
-  const headSha = await getHeadSha();
-  const masterSha = await getMasterSha();
-  return {
-    headSha,
-    masterSha,
-    tagName: await getTagName(),
-    isMaster: headSha === masterSha,
-  };
-}
-
-export async function add(path) {
-  return git('add', '-f', path);
-}
-
-export async function commit(message) {
-  return git('commit', '--message', message);
-}
-
-export { git };
+module.exports = {
+  async remotes() {
+    return git('remote', '-v');
+  },
+  async branches() {
+    return git('branch', '-a');
+  },
+  async commitInfo() {
+    const headSha = await getHeadSha();
+    const masterSha = await getMasterSha();
+    return {
+      headSha,
+      masterSha,
+      tagName: await getTagName(),
+      isMaster: headSha === masterSha,
+    };
+  },
+  async add(path) {
+    return git('add', '-f', path);
+  },
+  async commit(message) {
+    return git('commit', '--message', message);
+  },
+  git,
+};
 
 async function getHeadSha() {
   const stdout = await git('rev-parse', '--short', 'HEAD');
@@ -40,7 +37,6 @@ async function getMasterSha() {
     return stdout.trim();
   } catch (error) {
     if (/Needed a single revision/.test(error.message)) {
-      // Master was not checked out but in this case, so we know we are not master. We can ignore this
       return '';
     }
     throw error;
@@ -51,7 +47,7 @@ async function getTagName() {
   const stdout = await git('tag', '-l', '--points-at', 'HEAD');
   const trimmedStdout = stdout.trim();
   if (trimmedStdout === '') {
-    return null; // there is no tag
+    return null;
   }
 
   const tags = trimmedStdout.split(/\n|\r\n/);

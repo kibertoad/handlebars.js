@@ -1,6 +1,7 @@
-require('./common');
+import './common.js';
+import Handlebars from '../../lib/index.js';
 
-global.Handlebars = require('../../lib');
+global.Handlebars = Handlebars;
 
 global.CompilerContext = {
   compile: function (template, options) {

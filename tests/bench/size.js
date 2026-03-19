@@ -6,7 +6,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 import { gzip } from 'node:zlib';
 import { promisify } from 'node:util';
 import Handlebars from '../../lib/index.js';
-import { templates } from './templates.mjs';
+import { templates } from './templates.js';
 
 const gzipAsync = promisify(gzip);
 
