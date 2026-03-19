@@ -30,6 +30,12 @@
   "type": "module",
   "main": "lib/index.js",
   "types": "types/index.d.ts",
+  "imports": {
+    "#source-node": {
+      "node": "./lib/handlebars/compiler/source-node.node.js",
+      "default": "./lib/handlebars/compiler/source-node.browser.js"
+    }
+  },
   "exports": {
     ".": {
       "types": "./types/index.d.ts",
