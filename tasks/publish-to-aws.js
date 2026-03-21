@@ -1,8 +1,15 @@
 /* eslint-disable no-console */
-import fs from 'fs';
-import { S3, PutObjectCommand } from '@aws-sdk/client-s3';
-import * as git from './util/git.js';
-import semver from 'semver';
+const fs = require('fs');
+const { S3, PutObjectCommand } = require('@aws-sdk/client-s3');
+const git = require('./util/git');
+const semver = require('semver');
+
+const PUBLISHED_FILES = [
+  'handlebars.js',
+  'handlebars.min.js',
+  'handlebars.runtime.js',
+  'handlebars.runtime.min.js',
+];
 
 let s3Client;
 
@@ -13,24 +20,28 @@ async function main() {
   const commitInfo = await git.commitInfo();
   console.log('tag: ', commitInfo.tagName);
 
-  const suffixes = [];
-
-  // Publish the master as "latest" and with the commit-id
-  if (commitInfo.isMaster) {
-    suffixes.push('-latest');
-    suffixes.push('-' + commitInfo.headSha);
-  }
-
-  // Publish tags by their tag-name
-  if (commitInfo.tagName != null && semver.valid(commitInfo.tagName)) {
-    suffixes.push('-' + commitInfo.tagName);
-  }
+  const suffixes = buildSuffixes(commitInfo);
 
   if (suffixes.length > 0) {
     validateS3Env();
     console.log('publishing file-suffixes: ' + JSON.stringify(suffixes));
     await publish(suffixes);
   }
+}
+
+function buildSuffixes(commitInfo) {
+  const suffixes = [];
+
+  if (commitInfo.isMaster) {
+    suffixes.push('-latest');
+    suffixes.push('-' + commitInfo.headSha);
+  }
+
+  if (commitInfo.tagName != null && semver.valid(commitInfo.tagName)) {
+    suffixes.push('-' + commitInfo.tagName);
+  }
+
+  return suffixes;
 }
 
 function validateS3Env() {
@@ -44,33 +55,30 @@ function validateS3Env() {
   }
 }
 
-async function publish(suffixes) {
-  const publishPromises = suffixes.map((suffix) => publishSuffix(suffix));
+async function publish(suffixes, overrides) {
+  const publishPromises = suffixes.map((suffix) =>
+    publishSuffix(suffix, overrides)
+  );
   return Promise.all(publishPromises);
 }
 
-async function publishSuffix(suffix) {
-  const filenames = [
-    'handlebars.js',
-    'handlebars.min.js',
-    'handlebars.runtime.js',
-    'handlebars.runtime.min.js',
-  ];
-  const publishPromises = filenames.map(async (filename) => {
+async function publishSuffix(suffix, overrides) {
+  const publishPromises = PUBLISHED_FILES.map(async (filename) => {
     const nameInBucket = getNameInBucket(filename, suffix);
     const localFile = getLocalFile(filename);
-    await uploadToBucket(localFile, nameInBucket);
+    await uploadToBucket(localFile, nameInBucket, overrides);
     console.log(`Published ${localFile} to build server (${nameInBucket})`);
   });
   return Promise.all(publishPromises);
 }
 
-async function uploadToBucket(localFile, nameInBucket) {
-  const s3 = getS3Client();
+async function uploadToBucket(localFile, nameInBucket, overrides) {
+  const s3 = overrides?.s3Client ?? getS3Client();
+  const bucket = overrides?.bucket ?? process.env.S3_BUCKET_NAME;
 
   return s3.send(
     new PutObjectCommand({
-      Bucket: process.env.S3_BUCKET_NAME,
+      Bucket: bucket,
       Key: nameInBucket,
       Body: fs.readFileSync(localFile, 'utf8'),
     })
@@ -98,7 +106,18 @@ function getLocalFile(filename) {
   return 'dist/' + filename;
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+module.exports = {
+  PUBLISHED_FILES,
+  buildSuffixes,
+  validateS3Env,
+  publish,
+  getNameInBucket,
+  getLocalFile,
+};
+
+if (require.main === module) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
