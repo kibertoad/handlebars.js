@@ -1,17 +1,17 @@
-const fs = require('fs');
-const { S3, GetObjectCommand } = require('@aws-sdk/client-s3');
-const { createFakeS3 } = require('./fake-s3');
+import fs from 'fs';
+import { S3, GetObjectCommand } from '@aws-sdk/client-s3';
+import { createFakeS3 } from './fake-s3.js';
 
 const BUCKET = 'test-bucket';
 
-const {
+import {
   PUBLISHED_FILES,
   buildSuffixes,
   validateS3Env,
   publish,
   getNameInBucket,
   getLocalFile,
-} = require('../publish-to-aws');
+} from '../publish-to-aws.js';
 
 let server;
 let s3Client;

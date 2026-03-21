@@ -1,7 +1,7 @@
-const fs = require('fs');
-const { execSync } = require('child_process');
-const git = require('./util/grunt-git.cjs');
-const semver = require('semver');
+import fs from 'fs';
+import { execSync } from 'child_process';
+import * as git from './util/git.js';
+import semver from 'semver';
 
 async function main() {
   const version = process.argv[2];
@@ -50,19 +50,15 @@ async function main() {
   execSync('npm run build', { stdio: 'inherit' });
 }
 
-async function replaceAndAdd(filePath, regex, value) {
+export async function replaceAndAdd(filePath, regex, value) {
   let content = fs.readFileSync(filePath, 'utf8');
   content = content.replace(regex, value);
   fs.writeFileSync(filePath, content);
   await git.add(filePath);
 }
 
-module.exports = { replaceAndAdd };
-
-if (require.main === module) {
-  main().catch((err) => {
-    // eslint-disable-next-line no-console
-    console.error(err);
-    process.exit(1);
-  });
-}
+main().catch((err) => {
+  // eslint-disable-next-line no-console
+  console.error(err);
+  process.exit(1);
+});

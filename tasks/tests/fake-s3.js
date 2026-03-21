@@ -1,10 +1,10 @@
-const http = require('http');
+import http from 'http';
 
 /**
  * Minimal in-memory S3-compatible server for testing.
  * Supports PutObject and GetObject via path-style requests.
  */
-function createFakeS3() {
+export function createFakeS3() {
   const buckets = new Map();
 
   const server = http.createServer((req, res) => {
@@ -77,5 +77,3 @@ function parsePath(url) {
     key: parts.slice(1).join('/') || null,
   };
 }
-
-module.exports = { createFakeS3 };

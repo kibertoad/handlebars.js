@@ -1,10 +1,10 @@
 /* eslint-disable no-console */
-const fs = require('fs');
-const { S3, PutObjectCommand } = require('@aws-sdk/client-s3');
-const git = require('./util/git');
-const semver = require('semver');
+import fs from 'fs';
+import { S3, PutObjectCommand } from '@aws-sdk/client-s3';
+import * as git from './util/git.js';
+import semver from 'semver';
 
-const PUBLISHED_FILES = [
+export const PUBLISHED_FILES = [
   'handlebars.js',
   'handlebars.min.js',
   'handlebars.runtime.js',
@@ -29,7 +29,7 @@ async function main() {
   }
 }
 
-function buildSuffixes(commitInfo) {
+export function buildSuffixes(commitInfo) {
   const suffixes = [];
 
   if (commitInfo.isMaster) {
@@ -44,7 +44,7 @@ function buildSuffixes(commitInfo) {
   return suffixes;
 }
 
-function validateS3Env() {
+export function validateS3Env() {
   const bucket = process.env.S3_BUCKET_NAME,
     region = process.env.S3_REGION,
     key = process.env.S3_ACCESS_KEY_ID,
@@ -55,7 +55,7 @@ function validateS3Env() {
   }
 }
 
-async function publish(suffixes, overrides) {
+export async function publish(suffixes, overrides) {
   const publishPromises = suffixes.map((suffix) =>
     publishSuffix(suffix, overrides)
   );
@@ -98,24 +98,17 @@ function getS3Client() {
   return s3Client;
 }
 
-function getNameInBucket(filename, suffix) {
+export function getNameInBucket(filename, suffix) {
   return filename.replace(/\.js$/, suffix + '.js');
 }
 
-function getLocalFile(filename) {
+export function getLocalFile(filename) {
   return 'dist/' + filename;
 }
 
-module.exports = {
-  PUBLISHED_FILES,
-  buildSuffixes,
-  validateS3Env,
-  publish,
-  getNameInBucket,
-  getLocalFile,
-};
+import { fileURLToPath } from 'url';
 
-if (require.main === module) {
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main().catch((err) => {
     console.error(err);
     process.exit(1);

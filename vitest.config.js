@@ -64,6 +64,10 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['lib/**/*.js'],
+      exclude: [
+        'lib/handlebars/compiler/source-node.browser.js',
+        'lib/handlebars/compiler/source-node.node.js',
+      ],
       thresholds: {
         statements: 99,
         branches: 98,

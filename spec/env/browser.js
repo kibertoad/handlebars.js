@@ -1,7 +1,10 @@
-require('./common');
+import './common.js';
 
-var fs = require('fs'),
-  vm = require('vm');
+import fs from 'fs';
+import vm from 'vm';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
 
 global.Handlebars = 'no-conflict';
 

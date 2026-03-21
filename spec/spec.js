@@ -1,16 +1,20 @@
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 describe('spec', function () {
   // NOP Under non-node environments
   if (typeof process === 'undefined') {
     return;
   }
 
-  var fs = require('fs');
-
   var specDir = __dirname + '/mustache/specs/';
   var specs = fs.readdirSync(specDir).filter((name) => /.*\.json$/.test(name));
 
   specs.forEach(function (name) {
-    var spec = require(specDir + name);
+    var spec = JSON.parse(fs.readFileSync(specDir + name, 'utf8'));
     spec.tests.forEach(function (test) {
       // Our lambda implementation knowingly deviates from the optional Mustache lambda spec
       // We also do not support alternative delimiters
