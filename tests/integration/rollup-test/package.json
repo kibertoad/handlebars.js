@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Various tests with Handlebars and rollup",
+  "type": "module",
   "scripts": {
     "build": "rollup --config rollup.config.js"
   },
