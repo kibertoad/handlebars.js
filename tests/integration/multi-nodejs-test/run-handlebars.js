@@ -1,6 +1,5 @@
-// This test should run successfully with node 0.10++ as long as Handlebars has been compiled before
-var assert = require('assert');
-var Handlebars = require('handlebars');
+import assert from 'assert';
+import Handlebars from 'handlebars';
 
 console.log('Testing built Handlebars with Node version ' + process.version);
 

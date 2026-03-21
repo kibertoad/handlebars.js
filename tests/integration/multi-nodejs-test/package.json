@@ -6,6 +6,7 @@
   "keywords": [],
   "license": "MIT",
   "author": "Nils Knappmeier",
+  "type": "module",
   "scripts": {
     "test": "node run-handlebars.js",
     "test-precompile": "handlebars precompile-test-template.txt.hbs"
