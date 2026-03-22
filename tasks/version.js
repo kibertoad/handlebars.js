@@ -57,8 +57,12 @@ export async function replaceAndAdd(filePath, regex, value) {
   await git.add(filePath);
 }
 
-main().catch((err) => {
-  // eslint-disable-next-line no-console
-  console.error(err);
-  process.exit(1);
-});
+import { fileURLToPath } from 'url';
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch((err) => {
+    // eslint-disable-next-line no-console
+    console.error(err);
+    process.exit(1);
+  });
+}

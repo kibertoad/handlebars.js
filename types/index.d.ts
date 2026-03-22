@@ -293,4 +293,36 @@ declare module 'handlebars/runtime' {
   export default runtime;
 }
 
+// Named exports matching lib/index.js for ESM/CJS interop
+export const create: typeof Handlebars.create;
+export const compile: typeof Handlebars.compile;
+export const precompile: typeof Handlebars.precompile;
+export const template: typeof Handlebars.template;
+export { parse, parseWithoutProcessing } from '@handlebars/parser';
+export const VERSION: typeof Handlebars.VERSION;
+export const COMPILER_REVISION: number;
+export const LAST_COMPATIBLE_COMPILER_REVISION: number;
+export const REVISION_CHANGES: { [revision: number]: string };
+export import AST = Handlebars.AST;
+export const Compiler: Handlebars.ICompiler;
+export const JavaScriptCompiler: any;
+export const Parser: any;
+export import Visitor = Handlebars.Visitor;
+export import SafeString = Handlebars.SafeString;
+export import Exception = Handlebars.Exception;
+export import Utils = Handlebars.Utils;
+export const escapeExpression: typeof Handlebars.escapeExpression;
+export import VM = Handlebars.VM;
+export const log: typeof Handlebars.log;
+export const registerHelper: typeof Handlebars.registerHelper;
+export const unregisterHelper: typeof Handlebars.unregisterHelper;
+export const registerPartial: typeof Handlebars.registerPartial;
+export const unregisterPartial: typeof Handlebars.unregisterPartial;
+export const registerDecorator: typeof Handlebars.registerDecorator;
+export const unregisterDecorator: typeof Handlebars.unregisterDecorator;
+export function print(ast: hbs.AST.Program): string;
+export class PrintVisitor {
+  accept(node: hbs.AST.Node): void;
+}
+
 export default Handlebars;

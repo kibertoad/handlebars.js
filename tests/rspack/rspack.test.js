@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.resolve(__dirname, '../../dist');
 
 const EXPECTED_BUNDLES = [
@@ -39,7 +41,7 @@ describe('rspack build output', () => {
         path.join(distDir, 'handlebars.js'),
         'utf8'
       );
-      expect(content).toContain('Handlebars');
+      expect(content).toContain('self.Handlebars');
     });
 
     it('handlebars.runtime.js assigns to self.Handlebars', () => {
@@ -47,7 +49,7 @@ describe('rspack build output', () => {
         path.join(distDir, 'handlebars.runtime.js'),
         'utf8'
       );
-      expect(content).toContain('Handlebars');
+      expect(content).toContain('self.Handlebars');
     });
   });
 

@@ -1,6 +1,8 @@
+import { createRequire } from 'module';
+
 var SourceMap, SourceMapConsumer;
 try {
-  SourceMap = require('source-map');
+  SourceMap = createRequire(import.meta.url)('source-map');
   SourceMapConsumer = SourceMap.SourceMapConsumer;
 } catch {
   /* NOP for in browser */
