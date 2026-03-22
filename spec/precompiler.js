@@ -2,7 +2,11 @@
 import Handlebars from '../lib/index.js';
 import * as Precompiler from '../lib/precompiler.js';
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import uglify from 'uglify-js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe('precompiler', function () {
   // NOP Under non-node environments
